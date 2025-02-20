@@ -43,7 +43,7 @@ services:
     environment:
       - API_TOKEN="7053839067:AAF6eUYIcKIXcNIdC0fGCnErFbsgwnOoS2c"
       - NOCODB_BASE_URL=http://nocodb:8080
-      - NOCODB_API_TOKEN="YcMwNErI54Q5_Dp5H07YTE6H0WDAv2Vsw_0YX35U"
+      - NOCODB_API_TOKEN="X9UI1RE9GoovWu6x0exHQTOnMbbY8C1c1yshAYU_"
     volumes:
       - .:/app
     restart: always
