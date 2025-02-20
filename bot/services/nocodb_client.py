@@ -1,5 +1,8 @@
 # bot/services/nocodb_client.py
-import requests
+import httpx
+import logging
+
+logger = logging.getLogger(__name__)
 
 class NocodbClient:
     def __init__(self, base_url: str, api_token: str):
@@ -12,11 +15,11 @@ class NocodbClient:
         self.base_url = base_url
         self.api_token = api_token
         self.headers = {
-            "xc-auth": self.api_token,
+            "xc-token": self.api_token,
             "Content-Type": "application/json"
         }
 
-    def get_project_users(self, project_id: str):
+    async def get_project_users(self, project_id: str):
         """
         Получает список пользователей, у которых есть доступ к проекту.
 
@@ -25,9 +28,12 @@ class NocodbClient:
         """
         url = f"{self.base_url}/api/v1/db/meta/projects/{project_id}/users"
         try:
-            response = requests.get(url, headers=self.headers)
-            response.raise_for_status()  # Проверяем, что запрос успешен
-            return response.json()  # Возвращаем JSON-ответ
-        except requests.exceptions.RequestException as e:
-            print(f"Ошибка при запросе к NocoDB: {e}")
+            async with httpx.AsyncClient() as client:
+                logger.info(f"Отправка запроса к URL: {url}")
+                response = await client.get(url, headers=self.headers)
+                response.raise_for_status()  # Проверяем, что запрос успешен
+                logger.info(f"Ответ от NocoDB: {response.json()}")
+                return response.json()  # Возвращаем JSON-ответ
+        except httpx.HTTPStatusError as e:
+            logger.error(f"Ошибка при запросе к NocoDB: {e}")
             return None
