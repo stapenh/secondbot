@@ -5,6 +5,7 @@ from aiogram.client.default import DefaultBotProperties
 from aiogram.fsm.storage.memory import MemoryStorage
 from bot.handlers.start import router as start_router
 from config import API_TOKEN
+from bot.handlers.find_user import router as find_router
 
 # Инициализация бота
 bot = Bot(
@@ -16,8 +17,10 @@ bot = Bot(
 storage = MemoryStorage()
 dp = Dispatcher(storage=storage)
 
-# Регистрация хэндлеров
+# Регистрация
 dp.include_router(start_router)
+dp.include_router(find_router)
+
 
 # Запуск бота
 async def main():
@@ -25,4 +28,5 @@ async def main():
 
 if __name__ == '__main__':
     import asyncio
+
     asyncio.run(main())

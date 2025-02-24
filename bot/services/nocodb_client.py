@@ -1,8 +1,9 @@
 # bot/services/nocodb_client.py
 import httpx
-import logging
 
-logger = logging.getLogger(__name__)
+from logger_config import logger
+
+
 
 class NocodbClient:
     def __init__(self, base_url: str, api_token: str):
