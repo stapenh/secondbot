@@ -1,5 +1,11 @@
-aiogram
+aiogram~=3.18.0
 requests
-httpx
-psycopg2-binary
-loguru
+httpx~=0.28.1
+psycopg2-binary~=2.9.9
+loguru~=0.7.3
+
+python-dateutil~=2.9.0.post0
+pip~=25.0.1
+attrs~=25.1.0
+wheel~=0.37.0
+six~=1.15.0

@@ -6,6 +6,8 @@ from aiogram.fsm.storage.memory import MemoryStorage
 from bot.handlers.start import router as start_router
 from config import API_TOKEN
 from bot.handlers.find_user import router as find_router
+from bot.handlers.delete_user import router as delete_router
+from bot.handlers.whohave import router as who_router
 
 # Инициализация бота
 bot = Bot(
@@ -20,6 +22,8 @@ dp = Dispatcher(storage=storage)
 # Регистрация
 dp.include_router(start_router)
 dp.include_router(find_router)
+dp.include_router(who_router)
+dp.include_router(delete_router)
 
 
 # Запуск бота

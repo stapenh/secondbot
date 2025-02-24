@@ -23,6 +23,9 @@ services:
 
 
   root_db:
+    ports:
+      - "5432:5432"
+
     image: postgres
     environment:
       POSTGRES_DB: root_db

@@ -6,6 +6,7 @@ from aiogram.fsm.state import State, StatesGroup
 from bot.services.nocodb_client import NocodbClient
 from config import NOCODB_BASE_URL, NOCODB_API_TOKEN
 from logger_config import logger
+from bot.handlers.find_user import is_valid_email
 
 router = Router()
 

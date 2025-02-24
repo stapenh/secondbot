@@ -71,30 +71,6 @@ def get_user(email: str) -> Optional[Dict]:
         logger.info(f"Пользователь с email {email} не найден")
         return None
 
-def delete_user(email: str) -> bool:
-    """Удаляет пользователя по email и возвращает True, если удаление прошло успешно."""
-    query = "DELETE FROM nc_users_v2 WHERE email = %s RETURNING id, email, invite_token"
-    conn = get_connection()
-    if not conn:
-        return False
-
-    try:
-        with conn.cursor() as cursor:
-            cursor.execute(query, (email,))
-            deleted_user = cursor.fetchone()
-            if deleted_user:
-                conn.commit()
-                logger.info(f"Пользователь удален: {deleted_user}")
-                return True
-            else:
-                logger.info(f"Пользователь с email {email} не найден для удаления")
-                return False
-    except psycopg2.Error as e:
-        logger.error(f"Ошибка при удалении пользователя: {e}")
-        return False
-    finally:
-        conn.close()
-
 def is_valid_email(email: str) -> bool:
     """Проверяет, является ли email корректным."""
     pattern = r"^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$"
@@ -121,10 +97,10 @@ async def handle_user_input(message: Message, state: FSMContext):
 
     try:
         user_data = get_user(user_input)
-        time =datetime.fromisoformat(user_data.get('invite_token_expires'))
+        time =isoparse(user_data.get('invite_token_expires'))
 
         if user_data:
-            if time < now:
+            if time > now:
                 response_text = (
                     f"✅ Найден пользователь:\n"
                     f"ID: {user_data.get('id')}\n"
@@ -140,6 +116,8 @@ async def handle_user_input(message: Message, state: FSMContext):
                 )
         else:
             response_text = "❌ Пользователь не найден."
+
+        await message.answer(response_text)
     except Exception as e:
         logger.error(f"Ошибка при получении пользователя: {e}")
         await message.answer("⚠ Ошибка при поиске пользователя. Попробуйте позже.")
