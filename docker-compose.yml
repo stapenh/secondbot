@@ -45,16 +45,16 @@ services:
     build: .
     container_name: secondbot
     environment:
-      - API_TOKEN="7053839067:AAF6eUYIcKIXcNIdC0fGCnErFbsgwnOoS2c"
-      - NOCODB_BASE_URL= "http://nocodb:8080"
-      - NOCODB_API_TOKEN="iT9i5suXBolU7q6p7uuYkPlUIGjSdQ_utPu1hcdv"
-      - ADMIN_IDS="726850451"
-      - DB_NAME = 'root_db'
-      - DB_USER = 'postgres'
-      - DB_PASSWORD ="password"
-      - DB_HOST = 'root_db'
-      - DB_PORT = '5432
-      - INVITE_URL = 'http://localhost:8080/dashboard/#/signup'
+      - API_TOKEN=${API_TOKEN}
+      - NOCODB_BASE_URL=${NOCODB_BASE_URL}
+      - NOCODB_API_TOKEN=${NOCODB_API_TOKEN}
+      - ADMIN_IDS=${ADMIN_IDS}
+      - DB_NAME=${DB_NAME}
+      - DB_USER=${DB_USER}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - DB_HOST=${DB_HOST}
+      - DB_PORT=${DB_PORT}
+      - INVITE_URL=${INVITE_URL}
     volumes:
       - .:/app
     restart: always
