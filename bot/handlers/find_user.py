@@ -3,13 +3,14 @@ import psycopg2
 from aiogram.filters import Command
 from aiogram.fsm.context import FSMContext
 from aiogram import Router
-from aiogram.types import Message
+from aiogram.types import Message, CallbackQuery
 from aiogram.fsm.state import State, StatesGroup
 from logger_config import logger
 import config
 import re
 from datetime import datetime, timezone
 from dateutil.parser import isoparse
+
 
 
 router = Router()
@@ -79,9 +80,9 @@ def is_valid_email(email: str) -> bool:
 class UserState(StatesGroup):
     WAITING_FOR_USER_INPUT = State()
 
-@router.message(Command("find"))
-async def find_command(message: Message, state: FSMContext):
-    await message.answer("Привет! Введите e-mail:")
+@router.callback_query(lambda c: c.data == "find")
+async def find_command(callback: CallbackQuery, state: FSMContext):
+    await callback.message.answer("Введите e-mail пользователя:")
     await state.set_state(UserState.WAITING_FOR_USER_INPUT)
     logger.info("Состояние установлено: WAITING_FOR_USER_INPUT")
 
@@ -92,7 +93,7 @@ async def handle_user_input(message: Message, state: FSMContext):
     user_input = message.text.strip()
 
     if not is_valid_email(user_input):
-        await message.answer("❌ Пожалуйста, введите корректный e-mail.")
+        await message.answer("Пожалуйста, введите корректный e-mail.")
         return
 
     try:
@@ -102,24 +103,24 @@ async def handle_user_input(message: Message, state: FSMContext):
         if user_data:
             if time > now:
                 response_text = (
-                    f"✅ Найден пользователь:\n"
-                    f"ID: {user_data.get('id')}\n"
-                    f"Email: {user_data.get('email')}\n"
-                    f"Invite Link: http://localhost:8080/dashboard/#/signup{user_data.get('invite_token')}\n"
-
+                    f"Найден пользователь:\n"
+                    f"ID: <code>{user_data.get('id')}</code>\n"
+                    f"Email: <code>{user_data.get('email')}</code>\n"
+                    f"Ссылка для приглашения: <code>{config.INVITE_URL}/{user_data.get('invite_token')}</code>"
                 )
+
             else:
                 response_text = (
-                    f"✅ Найден пользователь:\n"
+                    f"Найден пользователь:\n"
                     f"ID: {user_data.get('id')}\n"
                     f"Email: {user_data.get('email')}\n"
                 )
         else:
-            response_text = "❌ Пользователь не найден."
+            response_text = "Пользователь не найден."
 
-        await message.answer(response_text)
+        await message.answer(response_text, parse_mode="HTML")
     except Exception as e:
         logger.error(f"Ошибка при получении пользователя: {e}")
-        await message.answer("⚠ Ошибка при поиске пользователя. Попробуйте позже.")
+        await message.answer("Ошибка при поиске пользователя. Попробуйте позже.")
 
     await state.clear()
