@@ -30,14 +30,17 @@ admin_keyboard = InlineKeyboardMarkup(
 async def admin_command(message: types.Message):
     """Отправляет админ-клавиатуру."""
 
-    logger.info(f"Пользователь {message.from_user.id} вызвал команду /admin")
-    if message.from_user.id in config.ADMIN_IDS:
+    user_id = getattr(message.from_user, "id", None)
+    if user_id:
+        logger.info(f"Пользователь {user_id} вызвал команду /admin")
+        if user_id in config.ADMIN_IDS:
+        # Дальнейшие действия
 
-        try:
-            await message.answer("Добро пожаловать в Админ-панель!", reply_markup=admin_keyboard)
-            logger.info("Сообщение с админ-кнопками успешно отправлено")
-        except Exception as e:
-            logger.error(f"Ошибка при отправке клавиатуры админа: {e}")
-    else:
-        await message.answer("У вас нет доступа")
+            try:
+                await message.answer("Добро пожаловать в Админ-панель!", reply_markup=admin_keyboard)
+                logger.info("Сообщение с админ-кнопками успешно отправлено")
+            except Exception as e:
+                logger.error(f"Ошибка при отправке клавиатуры админа: {e}")
+        else:
+            await message.answer("У вас нет доступа")
 

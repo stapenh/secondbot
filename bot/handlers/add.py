@@ -9,7 +9,6 @@ from logger_config import logger
 from bot.handlers.find_user import get_connection, get_user, is_valid_email
 from aiogram.filters import Command
 from bot.services.find_base_id import get_base_id_by_all
-from bot.handlers.button import admin_keyboard
 
 router = Router()
 
@@ -71,16 +70,27 @@ def assign_user_to_base(base_id: str, email: str) -> bool:
 async def cmd_add(callback: CallbackQuery, state: FSMContext):
     """Начинает процесс добавления пользователя в базу."""
     logger.info(f"Пользователь {callback.from_user.id} начал процесс добавления.")
+    if callback.message:
 
-    await callback.message.answer("Введите название магазина:")
-    await state.set_state(AddUserState.waiting_for_base)
+        await callback.message.answer("Введите название магазина:")
+        await state.set_state(AddUserState.waiting_for_base)
+        return
+    await callback.answer("caput.", show_alert=True)
+    return
 
 # Хендлер получения названия базы
 @router.message(AddUserState.waiting_for_base)
 async def process_base_name(message: Message, state: FSMContext):
     """Проверяет, существует ли база, и запрашивает email пользователя."""
-    base_title = message.text.strip()
-    logger.info(f"Получено название базы: '{base_title}' от пользователя {message.from_user.id}")
+    if message.text:
+        base_title = message.text.strip()
+    else:
+        await message.answer("pusto")
+        return
+    if message.from_user:
+        logger.info(f"Получено название базы: '{base_title}' от пользователя {message.from_user.id}")
+    else:
+        logger.info(f"📨Получено название базы: '{base_title}' от неизвестного пользователя")
 
     try:
         base_id = get_base_id_by_all(base_title)
@@ -101,8 +111,15 @@ async def process_base_name(message: Message, state: FSMContext):
 @router.message(AddUserState.waiting_for_user_id)
 async def process_user_id(message: Message, state: FSMContext):
     """Добавляет пользователя в найденную базу."""
-    email = message.text.strip()
-    logger.info(f"Получен e-mail пользователя: '{email}' от {message.from_user.id}")
+    if message.text:
+        email = message.text.strip()
+    else:
+        await message.answer("pusto")
+        return
+    if message.from_user:
+        logger.info(f"Получен e-mail пользователя: '{email}' от {message.from_user.id}")
+    else:
+        logger.info(f"Получен e-mail пользователя: '{email}' от unknown user")
 
     if not is_valid_email(email):
         await message.answer("Введите корректный e-mail.")
@@ -113,7 +130,12 @@ async def process_user_id(message: Message, state: FSMContext):
     base_id = data.get("base_id")
 
     if not base_id:
-        logger.error(f"Ошибка: base_id не найден в state для пользователя {message.from_user.id}")
+        if message.from_user:
+
+            logger.error(f"Ошибка: base_id не найден в state для пользователя {message.from_user.id}")
+        else:
+            logger.error(f"Ошибка: base_id не найден в state для unknown")
+
         await message.answer("Ошибка! Попробуйте снова.")
         await state.clear()
         return
@@ -134,4 +156,5 @@ async def process_user_id(message: Message, state: FSMContext):
 
     # Очищаем состояние FSM
     await state.clear()
-    logger.info(f"Состояние FSM очищено для пользователя {message.from_user.id}.")
+    if message.from_user:
+        logger.info(f"Состояние FSM очищено для пользователя {message.from_user.id}.")

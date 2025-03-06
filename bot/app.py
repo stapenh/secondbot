@@ -14,7 +14,7 @@ from logger_config import logger
 
 # Инициализация бота
 bot = Bot(
-    token=API_TOKEN,
+    token=str(API_TOKEN),
     default=DefaultBotProperties(parse_mode=ParseMode.HTML)
 )
 

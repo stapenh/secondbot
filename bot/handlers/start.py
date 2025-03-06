@@ -1,12 +1,11 @@
 from aiogram import Router, Bot
 from aiogram.types import Message, CallbackQuery
-from aiogram.filters import Command
+
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
 from bot.services.nocodb_client import NocodbClient
 from config import NOCODB_BASE_URL, NOCODB_API_TOKEN
 from logger_config import logger
-from bot.handlers.find_user import is_valid_email
 from bot.services.find_base_id import extract_project_id
 
 
@@ -18,9 +17,16 @@ class ProjectState(StatesGroup):
 @router.callback_query(lambda c: c.data == "start")
 async def start_command(callback: CallbackQuery, state: FSMContext):
     """Обрабатывает команду /start и запрашивает ID проекта."""
-    await callback.message.answer("Введите ID магазина или URL:")
-    await state.set_state(ProjectState.WAITING_FOR_PROJECT_INPUT)
-    logger.info("Состояние установлено: WAITING_FOR_PROJECT_INPUT")
+    if callback.message:
+        await callback.message.answer("Введите ID магазина или URL:")
+        await state.set_state(ProjectState.WAITING_FOR_PROJECT_INPUT)
+        logger.info("Состояние установлено: WAITING_FOR_PROJECT_INPUT")
+        return
+
+
+    await callback.answer("caput.", show_alert=True)
+    return
+
 
 @router.message(ProjectState.WAITING_FOR_PROJECT_INPUT)
 async def handle_project_input(message: Message, state: FSMContext, bot:Bot):
@@ -29,7 +35,10 @@ async def handle_project_input(message: Message, state: FSMContext, bot:Bot):
     user_input = message.text
 
     try:
-        # Извлекаем ID проекта
+        if not user_input:
+            await message.answer("Ошибка: сообщение пустое.")
+            return
+
         project_id = extract_project_id(user_input)
         logger.info(f"Извлеченный ID проекта: {project_id}")
     except IndexError:
@@ -42,7 +51,8 @@ async def handle_project_input(message: Message, state: FSMContext, bot:Bot):
 
     try:
         # Запрашиваем данные о пользователях проекта
-        client = NocodbClient(NOCODB_BASE_URL, NOCODB_API_TOKEN)
+        client = NocodbClient(NOCODB_BASE_URL or "", NOCODB_API_TOKEN or "")
+
         users = await client.get_project_users(project_id)
 
         if users and "users" in users and "list" in users["users"]:

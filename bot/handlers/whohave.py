@@ -1,5 +1,4 @@
 import psycopg2
-from aiogram.filters import Command
 from aiogram.fsm.context import FSMContext
 from aiogram import Router
 from aiogram.types import Message, CallbackQuery
@@ -66,16 +65,25 @@ def get_user_bases(email: str) -> list:
 @router.callback_query(lambda c: c.data == "who")
 async def find_command(callback: CallbackQuery, state: FSMContext):
     """Обрабатывает команду /who и запрашивает email пользователя."""
-    await callback.message.answer("Введите e-mail пользователя:")
-    await state.set_state(WhoState.WAITING_FOR_USER_INPUT)
-    logger.info("✅ Состояние установлено: WAITING_FOR_USER_INPUT")
-    await callback.answer()
+    if callback.message:
+        await callback.message.answer("Введите e-mail пользователя:")
+        await state.set_state(WhoState.WAITING_FOR_USER_INPUT)
+        logger.info("✅ Состояние установлено: WAITING_FOR_USER_INPUT")
+        await callback.answer()
+        return
+    await callback.answer("caput.", show_alert=True)
+    return
+
 
 @router.message(WhoState.WAITING_FOR_USER_INPUT)
 async def handle_user_input(message: Message, state: FSMContext):
     """Обрабатывает ввод email и возвращает список баз данных пользователя."""
     logger.info(f"📩 Получен email: {message.text}")
-    user_input = message.text.strip()
+    if message.text:
+        user_input = message.text.strip()
+    else:
+        await message.answer("Ошибка: сообщение пустое.")
+        return
 
     if not is_valid_email(user_input):
         await message.answer("Пожалуйста, введите корректный e-mail.")
@@ -98,4 +106,5 @@ async def handle_user_input(message: Message, state: FSMContext):
         await message.answer("Произошла ошибка. Попробуйте позже.")
 
     await state.clear()
-    logger.info(f"✅ Состояние FSM очищено для пользователя {message.from_user.id}.")
+    if message.from_user:
+        logger.info(f"✅ Состояние FSM очищено для пользователя {message.from_user.id}.")

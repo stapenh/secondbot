@@ -1,0 +1,13 @@
+include:
+ - project: "virtual-shops/pipeline-library/general-pipeline-library"
+   file: "ci/pipelines/python.yaml"
+
+
+variables:
+  APP_DIR: "bot"
+  CI: 'true'
+  OTLP_GRPC_ENDPOINT: ''
+  SERVICE_NAME: "marketplace_bots_api"
+  VERSION_KEYWORD: "MARKETPLACE_BOTS_API_VERSION"
+  SKIP_TESTS: 'true'
+

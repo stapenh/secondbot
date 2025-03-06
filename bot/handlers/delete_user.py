@@ -7,7 +7,7 @@ from logger_config import logger
 from bot.handlers.find_user import get_connection, is_valid_email, get_user
 from bot.services.find_base_id import get_base_id_by_all
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
-import bot.handlers.button
+
 
 router = Router()
 
@@ -58,18 +58,28 @@ def delete_user(email: str, base_id: str) -> bool:
 async def start_delete_process(callback: CallbackQuery, state: FSMContext):
     """Начинает процесс удаления пользователя по нажатию инлайн-кнопки."""
     logger.info(f"📌 Пользователь {callback.from_user.id} нажал кнопку 'Удалить пользователя'")
-    await callback.message.answer("Введите e-mail пользователя, которого нужно удалить:")
-    await state.set_state(DeleteState.WAITING_FOR_USER_INPUT_EMAIL)
-    await callback.answer()  # Подтверждаем нажатие кнопки
+    if callback.message:
+
+        await callback.message.answer("Введите e-mail пользователя, которого нужно удалить:")
+        await state.set_state(DeleteState.WAITING_FOR_USER_INPUT_EMAIL)
+        await callback.answer()  # Подтверждаем нажатие кнопки
+    await callback.answer("caput.", show_alert=True)
+    return
 
 
 # Хендлер для получения email пользователя
 @router.message(DeleteState.WAITING_FOR_USER_INPUT_EMAIL)
 async def process_email_input(message: Message, state: FSMContext):
     """Обрабатывает ввод email и запрашивает ID магазина."""
-    email_input = message.text.strip()
-    logger.info(f"📨 Получен email: '{email_input}' от пользователя {message.from_user.id}")
-
+    if message.text:
+        email_input = message.text.strip()
+    else:
+        await message.answer("Ошибка: сообщение пустое.")
+        return
+    if message.from_user:
+        logger.info(f"📨 Получен email: '{email_input}' от пользователя {message.from_user.id}")
+    else:
+        logger.info(f"📨 Получен email: '{email_input}' от неизвестного пользователя")
     if not is_valid_email(email_input):
         logger.warning(f"⚠ Некорректный email: {email_input}")
         await message.answer("Пожалуйста, введите корректный e-mail.")
@@ -92,14 +102,23 @@ async def process_email_input(message: Message, state: FSMContext):
 @router.message(DeleteState.WAITING_FOR_USER_INPUT_BASE)
 async def process_base_input(message: Message, state: FSMContext):
     """Обрабатывает ввод ID магазина и выполняет удаление."""
-    base_input = message.text.strip()
-    logger.info(f"🏢 Получен ID магазина: '{base_input}' от пользователя {message.from_user.id}")
+    if message.text:
+        base_input = message.text.strip()
+    else:
+        await message.answer("Ошибка: сообщение пустое.")
+        return
+    if message.from_user:
+        logger.info(f"🏢 Получен ID магазина: '{base_input}' от пользователя {message.from_user.id}")
 
     data = await state.get_data()
     email = data.get("email_input")
     logger.info(f"📨 Проверяем возможность удаления пользователя {email} из базы {base_input}...")
 
     try:
+        if not email or not base_input:
+            await message.answer("Ошибка: отсутствует email или ID магазина.")
+            return
+
         success = delete_user(email, base_input)
         if success:
             logger.info(f"✅ Пользователь {email} успешно удален из магазина {base_input}.")
@@ -112,4 +131,6 @@ async def process_base_input(message: Message, state: FSMContext):
         await message.answer("Произошла ошибка при удалении пользователя. Попробуйте позже.")
 
     await state.clear()
-    logger.info(f"♻ Состояние FSM очищено для пользователя {message.from_user.id}.")
+    if message.from_user:
+        logger.info(f"♻ Состояние FSM очищено для пользователя {message.from_user.id}.")
+

@@ -1,6 +1,5 @@
 from typing import Optional, List, Dict
 import psycopg2
-from aiogram.filters import Command
 from aiogram.fsm.context import FSMContext
 from aiogram import Router
 from aiogram.types import Message, CallbackQuery
@@ -82,15 +81,22 @@ class UserState(StatesGroup):
 
 @router.callback_query(lambda c: c.data == "find")
 async def find_command(callback: CallbackQuery, state: FSMContext):
-    await callback.message.answer("Введите e-mail пользователя:")
-    await state.set_state(UserState.WAITING_FOR_USER_INPUT)
-    logger.info("Состояние установлено: WAITING_FOR_USER_INPUT")
+    if callback.message:
+        await callback.message.answer("Введите e-mail пользователя:")
+        await state.set_state(UserState.WAITING_FOR_USER_INPUT)
+        logger.info("Состояние установлено: WAITING_FOR_USER_INPUT")
+        return
+    await callback.answer("caput.", show_alert=True)
+    return
 
 @router.message(UserState.WAITING_FOR_USER_INPUT)
 async def handle_user_input(message: Message, state: FSMContext):
-
     logger.info(f"Получен ввод: {message.text}")
-    user_input = message.text.strip()
+    if message.text:
+        user_input = message.text.strip()
+    else:
+        await message.answer("Ошибка: сообщение пустое.")
+        return
 
     if not is_valid_email(user_input):
         await message.answer("Пожалуйста, введите корректный e-mail.")
@@ -98,10 +104,19 @@ async def handle_user_input(message: Message, state: FSMContext):
 
     try:
         user_data = get_user(user_input)
-        time =isoparse(user_data.get('invite_token_expires'))
+        if user_data:
+            invite_token_expires = user_data.get('invite_token_expires')
+            if invite_token_expires:
+                time = isoparse(invite_token_expires)
+            else:
+                time = None
+        else:
+            await message.answer("Пользователь не найден.")
+            return
 
         if user_data:
-            if time > now:
+            if time and time > now:
+
                 response_text = (
                     f"Найден пользователь:\n"
                     f"ID: <code>{user_data.get('id')}</code>\n"

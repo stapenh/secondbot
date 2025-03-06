@@ -9,7 +9,7 @@ def extract_project_id(user_input: str) -> str:
     if user_input.startswith("http"):
         parts = user_input.split("/")
         if len(parts) >= 2:
-            return parts[-1]  # Извлекаем ID из URL
+            return parts[-2]  # Извлекаем ID из URL
         else:
             raise ValueError("Некорректный URL: невозможно извлечь ID.")
     else:
